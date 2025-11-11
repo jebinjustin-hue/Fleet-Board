@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Fleet Board (Pirate Ship)</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Login Modal -->
+    <div class="login-modal" id="loginModal">
+        <div class="login-content">
+            <div class="login-header">
+                <h2>Alpha Fleet Board</h2>
+                <p>Please sign in to continue</p>
+            </div>
+            <div class="login-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="emailInput">Email Address</label>
+                        <input type="email" id="emailInput" class="form-input" placeholder="your.email@alpha.school" required autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="nameInput">Your Name</label>
+                        <input type="text" id="nameInput" class="form-input" placeholder="Enter your name" required>
+                    </div>
+                    <div class="form-group" id="passwordGroup" style="display: none;">
+                        <label for="passwordInput">Admin Password</label>
+                        <input type="password" id="passwordInput" class="form-input" placeholder="Enter admin password">
+                    </div>
+                    <div id="passwordError" class="error-message" style="display: none; color: #e74c3c; font-size: 14px; margin-bottom: 10px;"></div>
+                    <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container hidden" id="appContainer">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>Alpha Afterschool Fleet Board</h1>
+                <div class="header-controls">
+                    <span class="user-info" id="userInfo"></span>
+                    <span class="last-refresh" id="lastRefresh">Last refresh: --</span>
+                    <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Controls Bar -->
+        <div class="controls-bar">
+            <div class="search-filter-group">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name...">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Status</option>
+                    <option value="Active">Active</option>
+                    <option value="PirateShip">Pirate Ship</option>
+                </select>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="urgentFilter">
+                    ≤3 days remaining
+                </label>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="exportBtn">Export CSV</button>
+                <button class="btn btn-secondary" id="viewToggle">Table View</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- Kanban Board View -->
+            <div class="kanban-board" id="kanbanBoard">
+                <div class="column" id="activeColumn">
+                    <div class="column-header">
+                        <h2>Active</h2>
+                        <span class="count-badge" id="activeCount">0</span>
+                    </div>
+                    <div class="column-content" id="activeContent" data-status="Active">
+                        <!-- Student cards will be inserted here -->
+                    </div>
+                </div>
+                <div class="column" id="pirateColumn">
+                    <div class="column-header">
+                        <h2>Pirate Ship</h2>
+                        <span class="count-badge" id="pirateCount">0</span>
+                    </div>
+                    <div class="column-content" id="pirateContent" data-status="PirateShip">
+                        <!-- Student cards will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table View -->
+            <div class="table-view hidden" id="tableView">
+                <div class="table-controls">
+                    <button class="btn btn-success" id="addStudentBtn">+ Add Student</button>
+                    <button class="btn btn-danger" id="deleteSelectedBtn">Delete Selected</button>
+                    <div style="flex: 1;"></div>
+                    <button class="btn btn-primary" id="bulkMoveBtn">Move Selected to Pirate Ship</button>
+                    <button class="btn btn-primary" id="bulkReleaseBtn">Release Selected</button>
+                    <button class="btn btn-primary" id="bulkExtendBtn">Extend Selected (+7d)</button>
+                    <button class="btn btn-primary" id="bulkExtend14Btn">Extend Selected (+14d)</button>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="selectAll"></th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Pirate Start</th>
+                            <th>Pirate End</th>
+                            <th>Days Left</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Table rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Move to Pirate Ship Modal -->
+    <div class="modal" id="moveToPirateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Move to Pirate Ship</h3>
+                <button class="modal-close" id="closeMoveModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Set sail: <strong id="moveStudentName"></strong> enters Pirate Ship.</p>
+                <div class="form-group">
+                    <label for="pirateStartDate">Start Date:</label>
+                    <input type="datetime-local" id="pirateStartDate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="pirateEndDate">End Date (auto-calculated):</label>
+                    <input type="datetime-local" id="pirateEndDate" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="moveNotes">Notes (optional):</label>
+                    <textarea id="moveNotes" class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelMoveBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmMoveBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Release Modal -->
+    <div class="modal" id="releaseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Release from Pirate Ship</h3>
+                <button class="modal-close" id="closeReleaseModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Anchors up: <strong id="releaseStudentName"></strong> returns to Active.</p>
+                <div class="form-group">
+                    <label for="releaseNotes">Notes (optional):</label>
+                    <textarea id="releaseNotes" class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelReleaseBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmReleaseBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Move Modal -->
+    <div class="modal" id="bulkMoveModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Move Selected to Pirate Ship</h3>
+                <button class="modal-close" id="closeBulkMoveModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Moving <strong id="bulkMoveCount">0</strong> student(s) to Pirate Ship.</p>
+                <div class="form-group">
+                    <label for="bulkStartDate">Start Date:</label>
+                    <input type="datetime-local" id="bulkStartDate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="bulkEndDate">End Date (auto-calculated):</label>
+                    <input type="datetime-local" id="bulkEndDate" class="form-input" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="bulkNotes">Notes (optional):</label>
+                    <textarea id="bulkNotes" class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelBulkMoveBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmBulkMoveBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Drawer -->
+    <div class="drawer" id="detailDrawer">
+        <div class="drawer-content">
+            <div class="drawer-header">
+                <h3 id="drawerStudentName">Student Details</h3>
+                <button class="drawer-close" id="closeDrawer">&times;</button>
+            </div>
+            <div class="drawer-body">
+                <div class="detail-section">
+                    <h4>Quick Actions</h4>
+                    <div class="action-buttons-group">
+                        <button class="btn btn-primary" id="extend7Btn">Extend +7 days</button>
+                        <button class="btn btn-primary" id="extend14Btn">Extend +14 days</button>
+                        <button class="btn btn-primary" id="releaseNowBtn">Release Now</button>
+                        <button class="btn btn-secondary" id="customDateBtn">Set Custom End Date</button>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h4>Notes</h4>
+                    <textarea id="drawerNotes" class="form-input" rows="3"></textarea>
+                    <button class="btn btn-primary" id="saveNotesBtn">Save Notes</button>
+                </div>
+                <div class="detail-section">
+                    <h4>History (Last 5 entries)</h4>
+                    <div id="historyList" class="history-list">
+                        <!-- History entries will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom End Date Modal -->
+    <div class="modal" id="customDateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Set Custom End Date</h3>
+                <button class="modal-close" id="closeCustomDateModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="customEndDate">End Date:</label>
+                    <input type="datetime-local" id="customEndDate" class="form-input">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelCustomDateBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmCustomDateBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="modal" id="addStudentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Student</h3>
+                <button class="modal-close" id="closeAddStudentModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="newStudentName">Student Name *</label>
+                    <input type="text" id="newStudentName" class="form-input" placeholder="Enter student name" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="newStudentStatus">Initial Status</label>
+                    <select id="newStudentStatus" class="form-input">
+                        <option value="Active">Active</option>
+                        <option value="PirateShip">Pirate Ship</option>
+                    </select>
+                </div>
+                <div class="form-group" id="newStudentPirateDates" style="display: none;">
+                    <label for="newStudentStartDate">Pirate Ship Start Date:</label>
+                    <input type="datetime-local" id="newStudentStartDate" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="newStudentNotes">Notes (optional):</label>
+                    <textarea id="newStudentNotes" class="form-input" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelAddStudentBtn">Cancel</button>
+                <button class="btn btn-primary" id="confirmAddStudentBtn">Add Student</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span id="toastMessage"></span>
+        <button class="btn btn-small" id="undoBtn">Undo</button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
